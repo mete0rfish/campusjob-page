@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import ReviewsPage from './pages/ReviewsPage';
 import WriteReviewPage from './pages/WriteReviewPage';
 import ProfilePage from './pages/ProfilePage';
+import ReviewDetailPage from './pages/ReviewDetailPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -40,6 +41,12 @@ const AppContent: React.FC = () => {
         <Route path="/reviews" element={
           <ProtectedRoute>
             <ReviewsPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/reviews/:id" element={
+          <ProtectedRoute>
+            <ReviewDetailPage />
           </ProtectedRoute>
         } />
         

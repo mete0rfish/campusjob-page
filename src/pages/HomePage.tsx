@@ -40,11 +40,16 @@ const HomePage: React.FC = () => {
     );
   };
 
+  const handleTagClick = (tag: string) => {
+    setSearchTerm(tag);
+  };
+
   const filteredReviews = reviews
     .filter(review =>
       review.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       review.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.position.toLowerCase().includes(searchTerm.toLowerCase())
+      review.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      review.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .filter(review => {
       if (activeTab === 'bookmarked') {
@@ -194,6 +199,7 @@ const HomePage: React.FC = () => {
                 review={review}
                 onLike={handleLike}
                 onBookmark={handleBookmark}
+                onTagClick={handleTagClick}
               />
             ))
           ) : (

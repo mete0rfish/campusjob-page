@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Filter, SortDesc } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import ReviewCard from '../components/ReviewCard';
 import { mockJobReviews } from '../data/mockData';
 import { JobReview } from '../types';
@@ -162,12 +163,13 @@ const ReviewsPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredAndSortedReviews.length > 0 ? (
             filteredAndSortedReviews.map(review => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                onLike={handleLike}
-                onBookmark={handleBookmark}
-              />
+              <Link key={review.id} to={`/reviews/${review.id}`}>
+                <ReviewCard
+                  review={review}
+                  onLike={handleLike}
+                  onBookmark={handleBookmark}
+                />
+              </Link>
             ))
           ) : (
             <div className="col-span-full text-center py-12">

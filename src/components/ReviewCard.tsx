@@ -7,9 +7,10 @@ interface ReviewCardProps {
   review: JobReview;
   onLike?: (id: string) => void;
   onBookmark?: (id: string) => void;
+  onTagClick?: (tag: string) => void;
 }
 
-const ReviewCard: React.FC<ReviewCardProps> = ({ review, onLike, onBookmark }) => {
+const ReviewCard: React.FC<ReviewCardProps> = ({ review, onLike, onBookmark, onTagClick }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ko-KR', {
@@ -56,12 +57,17 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review, onLike, onBookmark }) =
 
         <div className="flex flex-wrap gap-2 mb-4">
           {review.tags.slice(0, 3).map((tag, index) => (
-            <span
+            <button
               key={index}
-              className="px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onTagClick?.(tag);
+              }}
+              className="px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
             >
               #{tag}
-            </span>
+            </button>
           ))}
           {review.tags.length > 3 && (
             <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs">
