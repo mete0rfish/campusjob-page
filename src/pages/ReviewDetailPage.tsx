@@ -43,7 +43,20 @@ const ReviewDetailPage: React.FC = () => {
         await api.deleteReview(reviewId);
         navigate('/reviews');
       } catch (err) {
-        setError('리뷰 삭제 중 오류가 발생했습니다.');
+        if (err instanceof Error) {
+            try {
+                const errorResponse = JSON.parse(err.message);
+                if (errorResponse.code === 'COMMON_002') {
+                    setError('삭제할 권한이 없습니다.');
+                } else {
+                    setError('리뷰 삭제 중 오류가 발생했습니다.');
+                }
+            } catch (e) {
+                setError('리뷰 삭제 중 오류가 발생했습니다.');
+            }
+        } else {
+            setError('리뷰 삭제 중 오류가 발생했습니다.');
+        }
       }
     }
   };

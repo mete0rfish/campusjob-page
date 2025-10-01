@@ -36,7 +36,7 @@ const HomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              안녕하세요, {user?.name}님! 👋
+              안녕하세요! 👋
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 mb-8">
               동료들의 생생한 취업 후기를 확인하고 나만의 경험을 공유해보세요

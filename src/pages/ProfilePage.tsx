@@ -1,41 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, GraduationCap, Building, Edit3, Save, Camera, Heart, Bookmark, FileText } from 'lucide-react';
+import { User, Mail, Edit3, Save, Camera, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewCard from '../components/ReviewCard';
-import { ReviewResponse } from '../types';
+import { ReviewResponse, MemberResponse } from '../types';
 import * as api from '../api';
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: user?.name || '',
-    university: ''
-  });
+  const [profile, setProfile] = useState<MemberResponse | null>(null);
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchReviews = async () => {
+    const fetchData = async () => {
+      if (!user) return;
       try {
         setIsLoading(true);
-        const data = await api.getReviews();
-        setReviews(data.content || []);
+        const memberData = await api.getMe();
+        setProfile(memberData);
+
+        const reviewsData = await api.getReviews();
+        setReviews(reviewsData.content || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : '리뷰를 불러오는 중 오류가 발생했습니다.');
+        setError(err instanceof Error ? err.message : '데이터를 불러오는 중 오류가 발생했습니다.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchReviews();
-  }, []);
-
-  const handleSave = () => {
-    // 실제 구현에서는 API 호출
-    setIsEditing(false);
-  };
+    fetchData();
+  }, [user]);
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50">
@@ -55,54 +50,15 @@ const ProfilePage: React.FC = () => {
 
             {/* Profile Info */}
             <div className="flex-1 text-center md:text-left">
-              {isEditing ? (
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="이름"
-                  />
-                  <input
-                    type="text"
-                    value={editForm.university}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, university: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="대학교"
-                  />
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={handleSave}
-                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <Save size={16} />
-                      <span>저장</span>
-                    </button>
-                    <button
-                      onClick={() => setIsEditing(false)}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      취소
-                    </button>
-                  </div>
-                </div>
-              ) : (
                 <>
                   <div className="flex items-center justify-center md:justify-start space-x-3 mb-2">
-                    <h1 className="text-2xl font-bold text-gray-900">{user?.name}</h1>
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="text-gray-400 hover:text-blue-600 transition-colors"
-                    >
-                      <Edit3 size={20} />
-                    </button>
+                    <h1 className="text-2xl font-bold text-gray-900">{profile?.name}</h1>
                   </div>
                   
                   <div className="space-y-2 mb-6">
                     <div className="flex items-center justify-center md:justify-start space-x-2 text-gray-600">
                       <Mail size={16} />
-                      <span>{user?.email}</span>
+                      <span>{profile?.email}</span>
                     </div>
                   </div>
 
@@ -122,7 +78,6 @@ const ProfilePage: React.FC = () => {
                     </div>
                   </div>
                 </>
-              )}
             </div>
           </div>
         </div>

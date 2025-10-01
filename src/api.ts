@@ -1,4 +1,4 @@
-import { LoginRequest, LoginJoinRequest, CreateReviewRequest, UpdateReviewRequest, ReviewResponse, PagedReviewResponse } from './types';
+import { LoginRequest, LoginJoinRequest, CreateReviewRequest, UpdateReviewRequest, ReviewResponse, PagedReviewResponse, MemberResponse } from './types';
 
 const API_BASE_URL = 'http://localhost:8080';
 
@@ -66,6 +66,8 @@ export const createMember = (data: LoginJoinRequest) => request('/api/join', {
   method: 'POST',
   body: JSON.stringify(data),
 });
+
+export const getMe = (): Promise<MemberResponse> => request('/api/members/me');
 
 // Reviews
 export const getReviews = (): Promise<PagedReviewResponse> => request('/api/reviews');

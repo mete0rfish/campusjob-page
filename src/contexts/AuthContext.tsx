@@ -21,7 +21,7 @@ const decodeToken = (token: string): MemberResponse | null => {
     }).join(''));
 
     const decoded = JSON.parse(jsonPayload);
-    return { id: decoded.id, email: decoded.email };
+    return { id: decoded.id, email: decoded.email, name: decoded.name };
   } catch (e) {
     console.error("Failed to decode token", e);
     return null;
