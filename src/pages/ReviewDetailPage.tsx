@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { getReview } from '../api';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import * as api from '../api';
 import { ReviewResponse } from '../types';
-import { ArrowLeft, User, Calendar, Building } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Building, Trash2 } from 'lucide-react';
 
 const ReviewDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [review, setReview] = useState<ReviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +22,7 @@ const ReviewDetailPage: React.FC = () => {
           setLoading(false);
           return;
         }
-        const data = await getReview(reviewId);
+        const data = await api.getReview(reviewId);
         setReview(data);
       } catch (err) {
         setError('리뷰를 불러오는 데 실패했습니다.');
@@ -33,6 +34,19 @@ const ReviewDetailPage: React.FC = () => {
 
     fetchReview();
   }, [id]);
+
+  const handleDelete = async () => {
+    if (!id) return;
+    if (window.confirm('정말로 이 리뷰를 삭제하시겠습니까?')) {
+      try {
+        const reviewId = parseInt(id, 10);
+        await api.deleteReview(reviewId);
+        navigate('/reviews');
+      } catch (err) {
+        setError('리뷰 삭제 중 오류가 발생했습니다.');
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -73,11 +87,18 @@ const ReviewDetailPage: React.FC = () => {
   return (
     <div className="pt-16 min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
+        <div className="flex justify-between items-center mb-8">
           <Link to="/reviews" className="flex items-center text-gray-600 hover:text-blue-600 transition-colors duration-200">
             <ArrowLeft size={20} className="mr-2" />
             <span>모든 후기로 돌아가기</span>
           </Link>
+          <button
+            onClick={handleDelete}
+            className="flex items-center text-red-600 hover:text-red-800 transition-colors duration-200"
+          >
+            <Trash2 size={20} className="mr-2" />
+            <span>삭제</span>
+          </button>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
