@@ -19,14 +19,10 @@ const LoginPage: React.FC = () => {
     setError('');
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        navigate('/home');
-      } else {
-        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
-      }
+      await login({ email, password });
+      window.location.href = '/home';
     } catch (err) {
-      setError('로그인 중 오류가 발생했습니다.');
+      setError(err instanceof Error ? err.message : '로그인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -120,9 +116,7 @@ const LoginPage: React.FC = () => {
           </form>
         </div>
 
-        <div className="text-center text-sm text-gray-500">
-          <p>데모 계정: 아무 이메일과 비밀번호로 로그인하세요</p>
-        </div>
+        
       </div>
     </div>
   );

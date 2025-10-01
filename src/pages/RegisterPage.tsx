@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { RegisterData } from '../types';
+import { LoginJoinRequest } from '../types';
 
 const RegisterPage: React.FC = () => {
-  const [formData, setFormData] = useState<RegisterData>({
+  const [formData, setFormData] = useState<LoginJoinRequest>({
     name: '',
     email: '',
     password: '',
-    university: '',
-    major: '',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,12 +18,9 @@ const RegisterPage: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const universities = [
-    '서울대학교', '연세대학교', '고려대학교', '성균관대학교', '한양대학교',
-    '중앙대학교', '경희대학교', '한국외국어대학교', '서강대학교', '이화여자대학교'
-  ];
+  
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -33,10 +28,13 @@ const RegisterPage: React.FC = () => {
     }));
   };
 
+  const [successMessage, setSuccessMessage] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setSuccessMessage('');
 
     if (formData.password !== confirmPassword) {
       setError('비밀번호가 일치하지 않습니다.');
@@ -51,12 +49,13 @@ const RegisterPage: React.FC = () => {
     }
 
     try {
-      const success = await register(formData);
-      if (success) {
-        navigate('/home');
-      }
+      await register(formData);
+      setSuccessMessage('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
     } catch (err) {
-      setError('회원가입 중 오류가 발생했습니다.');
+      setError(err instanceof Error ? err.message : '회원가입 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -110,41 +109,6 @@ const RegisterPage: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-2">
-                대학교
-              </label>
-              <select
-                id="university"
-                name="university"
-                required
-                value={formData.university}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-              >
-                <option value="">대학교를 선택하세요</option>
-                {universities.map(uni => (
-                  <option key={uni} value={uni}>{uni}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="major" className="block text-sm font-medium text-gray-700 mb-2">
-                전공
-              </label>
-              <input
-                id="major"
-                name="major"
-                type="text"
-                required
-                value={formData.major}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                placeholder="전공을 입력하세요"
-              />
-            </div>
-
-            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 비밀번호
               </label>
@@ -183,6 +147,12 @@ const RegisterPage: React.FC = () => {
                 placeholder="비밀번호를 다시 입력하세요"
               />
             </div>
+
+            {successMessage && (
+              <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg text-sm">
+                {successMessage}
+              </div>
+            )}
 
             {error && (
               <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">

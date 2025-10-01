@@ -1,41 +1,77 @@
-export interface User {
-  id: string;
-  name: string;
+export interface MemberResponse {
+  id: number;
   email: string;
-  university: string;
-  major: string;
-  avatar?: string;
-  createdAt: string;
 }
 
-export interface JobReview {
-  id: string;
-  title: string;
+export interface ReviewResponse {
+  id: number;
   company: string;
-  position: string;
-  salary?: string;
-  content: string;
-  tags: string[];
-  author: User;
-  likes: number;
-  bookmarks: number;
-  createdAt: string;
-  isLiked?: boolean;
-  isBookmarked?: boolean;
+  certificates: string[];
+  age: number;
+  seekPeriod: string;
+  tip: string;
+}
+
+export interface UpdateReviewRequest {
+  certificates: string[];
+  age: number;
+  seekPeriod: string;
+  tip: string;
+}
+
+export interface CreateReviewRequest {
+  company: string;
+  certificates: string[];
+  age: number;
+  seekPeriod: string;
+  tip: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginJoinRequest {
+  email: string;
+  name: string;
+  password: string;
 }
 
 export interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (userData: RegisterData) => Promise<boolean>;
+  user: MemberResponse | null;
+  token: string | null;
+  login: (data: LoginRequest) => Promise<void>;
+  register: (data: LoginJoinRequest) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
-export interface RegisterData {
-  name: string;
-  email: string;
-  password: string;
-  university: string;
-  major: string;
+export interface Sort {
+  empty: boolean;
+  sorted: boolean;
+  unsorted: boolean;
+}
+
+export interface Pageable {
+  pageNumber: number;
+  pageSize: number;
+  sort: Sort;
+  offset: number;
+  paged: boolean;
+  unpaged: boolean;
+}
+
+export interface PagedReviewResponse {
+  content: ReviewResponse[];
+  pageable: Pageable;
+  last: boolean;
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  sort: Sort;
+  size: number;
+  first: boolean;
+  numberOfElements: number;
+  empty: boolean;
 }

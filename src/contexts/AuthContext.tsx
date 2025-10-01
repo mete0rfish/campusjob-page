@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthContextType, RegisterData } from '../types';
+import { MemberResponse, AuthContextType, LoginRequest, LoginJoinRequest } from '../types';
+import * as api from '../api';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -11,60 +12,66 @@ export const useAuth = () => {
   return context;
 };
 
+const decodeToken = (token: string): MemberResponse | null => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    const decoded = JSON.parse(jsonPayload);
+    return { id: decoded.id, email: decoded.email };
+  } catch (e) {
+    console.error("Failed to decode token", e);
+    return null;
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<MemberResponse | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('campusJob_token'));
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('campusJob_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    if (token) {
+      const decodedUser = decodeToken(token);
+      if (decodedUser) {
+        setUser(decodedUser);
+      }
+      localStorage.setItem('campusJob_token', token);
+    } else {
+      localStorage.removeItem('campusJob_token');
+      setUser(null);
     }
-  }, []);
+  }, [token]);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // 실제 구현에서는 API 호출
-    const mockUser: User = {
-      id: '1',
-      name: '김학생',
-      email,
-      university: '서울대학교',
-      major: '컴퓨터공학과',
-      avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
-      createdAt: new Date().toISOString(),
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem('campusJob_user', JSON.stringify(mockUser));
-    return true;
+  const login = async (data: LoginRequest) => {
+    const responseToken = await api.login(data);
+    if (responseToken) {
+      localStorage.setItem('campusJob_token', responseToken);
+      setToken(responseToken);
+    } else {
+      throw new Error('응답 헤더에서 유효한 토큰을 찾을 수 없습니다.');
+    }
   };
 
-  const register = async (userData: RegisterData): Promise<boolean> => {
-    // 실제 구현에서는 API 호출
-    const newUser: User = {
-      id: Date.now().toString(),
-      name: userData.name,
-      email: userData.email,
-      university: userData.university,
-      major: userData.major,
-      createdAt: new Date().toISOString(),
-    };
-    
-    setUser(newUser);
-    localStorage.setItem('campusJob_user', JSON.stringify(newUser));
-    return true;
+  const register = async (data: LoginJoinRequest) => {
+    await api.createMember(data);
   };
 
   const logout = () => {
+    localStorage.removeItem('campusJob_token');
+    setToken(null);
     setUser(null);
-    localStorage.removeItem('campusJob_user');
   };
 
   const value = {
     user,
+    token,
     login,
     register,
     logout,
-    isAuthenticated: !!user,
+    isAuthenticated: !!token,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

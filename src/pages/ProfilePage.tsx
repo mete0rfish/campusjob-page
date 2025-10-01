@@ -1,44 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, GraduationCap, Building, Edit3, Save, Camera, Heart, Bookmark, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { mockJobReviews } from '../data/mockData';
 import ReviewCard from '../components/ReviewCard';
+import { ReviewResponse } from '../types';
+import * as api from '../api';
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     name: user?.name || '',
-    university: user?.university || '',
-    major: user?.major || '',
+    university: ''
   });
-  const [activeTab, setActiveTab] = useState<'my-reviews' | 'liked' | 'bookmarked'>('my-reviews');
+  const [reviews, setReviews] = useState<ReviewResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // 사용자의 작성 후기 (실제로는 API에서 가져올 데이터)
-  const userReviews = mockJobReviews.filter(review => review.author.id === user?.id);
-  const likedReviews = mockJobReviews.filter(review => review.isLiked);
-  const bookmarkedReviews = mockJobReviews.filter(review => review.isBookmarked);
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.getReviews();
+        setReviews(data.content || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '리뷰를 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const stats = {
-    reviews: userReviews.length,
-    likes: userReviews.reduce((total, review) => total + review.likes, 0),
-    bookmarks: bookmarkedReviews.length,
-  };
+    fetchReviews();
+  }, []);
 
   const handleSave = () => {
     // 실제 구현에서는 API 호출
     setIsEditing(false);
-  };
-
-  const getCurrentReviews = () => {
-    switch (activeTab) {
-      case 'liked':
-        return likedReviews;
-      case 'bookmarked':
-        return bookmarkedReviews;
-      default:
-        return userReviews;
-    }
   };
 
   return (
@@ -50,15 +46,7 @@ const ProfilePage: React.FC = () => {
             {/* Profile Picture */}
             <div className="relative mb-6 md:mb-0">
               <div className="w-32 h-32 bg-gradient-to-br from-blue-400 to-green-400 rounded-full flex items-center justify-center mx-auto md:mx-0 shadow-lg">
-                {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <User size={48} className="text-white" />
-                )}
+                <User size={48} className="text-white" />
               </div>
               <button className="absolute bottom-0 right-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg">
                 <Camera size={20} />
@@ -82,13 +70,6 @@ const ProfilePage: React.FC = () => {
                     onChange={(e) => setEditForm(prev => ({ ...prev, university: e.target.value }))}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="대학교"
-                  />
-                  <input
-                    type="text"
-                    value={editForm.major}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, major: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="전공"
                   />
                   <div className="flex space-x-3">
                     <button
@@ -123,28 +104,20 @@ const ProfilePage: React.FC = () => {
                       <Mail size={16} />
                       <span>{user?.email}</span>
                     </div>
-                    <div className="flex items-center justify-center md:justify-start space-x-2 text-gray-600">
-                      <GraduationCap size={16} />
-                      <span>{user?.university}</span>
-                    </div>
-                    <div className="flex items-center justify-center md:justify-start space-x-2 text-gray-600">
-                      <Building size={16} />
-                      <span>{user?.major}</span>
-                    </div>
                   </div>
 
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-6 md:gap-8">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{stats.reviews}</div>
+                      <div className="text-2xl font-bold text-blue-600">{reviews.length}</div>
                       <div className="text-sm text-gray-600">작성한 후기</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">{stats.likes}</div>
+                      <div className="text-2xl font-bold text-red-600">0</div>
                       <div className="text-sm text-gray-600">받은 좋아요</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">{stats.bookmarks}</div>
+                      <div className="text-2xl font-bold text-yellow-600">0</div>
                       <div className="text-sm text-gray-600">북마크</div>
                     </div>
                   </div>
@@ -158,57 +131,42 @@ const ProfilePage: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex">
-              {[
-                { key: 'my-reviews', label: '내가 쓴 후기', icon: FileText, count: userReviews.length },
-                { key: 'liked', label: '좋아요한 후기', icon: Heart, count: likedReviews.length },
-                { key: 'bookmarked', label: '북마크한 후기', icon: Bookmark, count: bookmarkedReviews.length },
-              ].map(({ key, label, icon: Icon, count }) => (
                 <button
-                  key={key}
-                  onClick={() => setActiveTab(key as any)}
-                  className={`flex items-center space-x-2 px-6 py-4 font-medium text-sm border-b-2 transition-colors ${
-                    activeTab === key
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  className={`flex items-center space-x-2 px-6 py-4 font-medium text-sm border-b-2 transition-colors border-blue-500 text-blue-600'
                   }`}
                 >
-                  <Icon size={16} />
-                  <span>{label}</span>
+                  <FileText size={16} />
+                  <span>내가 쓴 후기</span>
                   <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                    {count}
+                    {reviews.length}
                   </span>
                 </button>
-              ))}
             </nav>
           </div>
 
           <div className="p-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {getCurrentReviews().length > 0 ? (
-                getCurrentReviews().map(review => (
+              {isLoading ? (
+                <div className="col-span-full text-center py-12">Loading...</div>
+              ) : error ? (
+                <div className="col-span-full text-center py-12 text-red-500">{error}</div>
+              ) : reviews.length > 0 ? (
+                reviews.map(review => (
                   <ReviewCard
                     key={review.id}
                     review={review}
-                    onLike={(id) => console.log('Like:', id)}
-                    onBookmark={(id) => console.log('Bookmark:', id)}
                   />
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">
                   <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    {activeTab === 'my-reviews' && <FileText className="text-gray-400" size={32} />}
-                    {activeTab === 'liked' && <Heart className="text-gray-400" size={32} />}
-                    {activeTab === 'bookmarked' && <Bookmark className="text-gray-400" size={32} />}
+                    <FileText className="text-gray-400" size={32} />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {activeTab === 'my-reviews' && '작성한 후기가 없습니다'}
-                    {activeTab === 'liked' && '좋아요한 후기가 없습니다'}
-                    {activeTab === 'bookmarked' && '북마크한 후기가 없습니다'}
+                    작성한 후기가 없습니다
                   </h3>
                   <p className="text-gray-600">
-                    {activeTab === 'my-reviews' && '첫 번째 취업 후기를 작성해보세요!'}
-                    {activeTab === 'liked' && '마음에 드는 후기에 좋아요를 눌러보세요'}
-                    {activeTab === 'bookmarked' && '나중에 읽을 후기를 북마크해보세요'}
+                    첫 번째 취업 후기를 작성해보세요!
                   </p>
                 </div>
               )}

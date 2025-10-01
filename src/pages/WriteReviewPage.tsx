@@ -2,58 +2,47 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft, Plus, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-
-interface ReviewFormData {
-  title: string;
-  company: string;
-  position: string;
-  salary: string;
-  content: string;
-  tags: string[];
-}
+import * as api from '../api';
+import { CreateReviewRequest } from '../types';
 
 const WriteReviewPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  const [formData, setFormData] = useState<ReviewFormData>({
-    title: '',
+  const [formData, setFormData] = useState<CreateReviewRequest>({
     company: '',
-    position: '',
-    salary: '',
-    content: '',
-    tags: [],
+    age: 0,
+    seekPeriod: '',
+    tip: '',
+    certificates: [],
   });
   
-  const [newTag, setNewTag] = useState('');
+  const [newCertificate, setNewCertificate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const popularCompanies = ['네이버', '카카오', '삼성전자', '토스', 'LG전자', '쿠팡'];
-  const popularPositions = ['프론트엔드 개발자', 'UX 디자이너', '마케팅 매니저', 'PM', '백엔드 개발자'];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: name === 'age' ? parseInt(value, 10) : value,
     }));
   };
 
-  const addTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim()) && formData.tags.length < 5) {
+  const addCertificate = () => {
+    if (newCertificate.trim() && !formData.certificates.includes(newCertificate.trim())) {
       setFormData(prev => ({
         ...prev,
-        tags: [...prev.tags, newTag.trim()],
+        certificates: [...prev.certificates, newCertificate.trim()],
       }));
-      setNewTag('');
+      setNewCertificate('');
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
+  const removeCertificate = (certToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove),
+      certificates: prev.certificates.filter(cert => cert !== certToRemove),
     }));
   };
 
@@ -62,22 +51,20 @@ const WriteReviewPage: React.FC = () => {
     setIsLoading(true);
     setError('');
 
-    if (!formData.title.trim() || !formData.company.trim() || !formData.content.trim()) {
-      setError('제목, 기업명, 내용은 필수 항목입니다.');
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.content.length < 50) {
-      setError('후기 내용은 50자 이상 작성해주세요.');
+    if (!formData.company.trim() || formData.age <= 0 || !formData.seekPeriod.trim() || !formData.tip.trim()) {
+      setError('모든 필드를 올바르게 입력해주세요.');
       setIsLoading(false);
       return;
     }
 
     try {
-      // 실제 구현에서는 API 호출
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      navigate('/reviews');
+      const { location } = await api.createReview(formData);
+      if (location) {
+        const path = new URL(location).pathname;
+        navigate(path);
+      } else {
+        navigate('/reviews');
+      }
     } catch (err) {
       setError('후기 작성 중 오류가 발생했습니다.');
     } finally {
@@ -106,30 +93,13 @@ const WriteReviewPage: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Information */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">기본 정보</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">후기 정보</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                  후기 제목 *
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  required
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  placeholder="예: 네이버 프론트엔드 개발자 합격 후기"
-                />
-              </div>
-
-              <div>
                 <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
-                  기업명 *
+                  회사명 *
                 </label>
                 <input
                   type="text"
@@ -139,117 +109,78 @@ const WriteReviewPage: React.FC = () => {
                   value={formData.company}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  placeholder="기업명을 입력하세요"
+                  placeholder="회사명을 입력하세요"
                 />
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {popularCompanies.map(company => (
-                    <button
-                      key={company}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, company }))}
-                      className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm hover:bg-blue-100 hover:text-blue-600 transition-colors"
-                    >
-                      {company}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <div>
-                <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-2">
-                  직무
+                <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
+                  나이 *
                 </label>
                 <input
-                  type="text"
-                  id="position"
-                  name="position"
-                  value={formData.position}
+                  type="number"
+                  id="age"
+                  name="age"
+                  required
+                  value={formData.age}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  placeholder="예: 프론트엔드 개발자"
+                  placeholder="나이를 입력하세요"
                 />
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {popularPositions.map(position => (
-                    <button
-                      key={position}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, position }))}
-                      className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm hover:bg-blue-100 hover:text-blue-600 transition-colors"
-                    >
-                      {position}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <div>
-                <label htmlFor="salary" className="block text-sm font-medium text-gray-700 mb-2">
-                  연봉/급여
+                <label htmlFor="seekPeriod" className="block text-sm font-medium text-gray-700 mb-2">
+                  구직 기간
                 </label>
                 <input
                   type="text"
-                  id="salary"
-                  name="salary"
-                  value={formData.salary}
+                  id="seekPeriod"
+                  name="seekPeriod"
+                  value={formData.seekPeriod}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  placeholder="예: 5000만원, 인턴"
+                  placeholder="예: 3개월"
                 />
               </div>
             </div>
           </div>
 
-          {/* Content */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">후기 내용</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">취업 꿀팁</h2>
             
             <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-                상세 후기 *
-              </label>
               <textarea
-                id="content"
-                name="content"
+                id="tip"
+                name="tip"
                 required
-                rows={12}
-                value={formData.content}
+                rows={8}
+                value={formData.tip}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
-                placeholder="다음과 같은 내용을 포함해주세요:
-• 지원 과정 (서류, 코딩테스트, 면접 등)
-• 준비 방법과 팁
-• 면접에서 받은 질문들
-• 합격/불합격 이유
-• 후배들에게 주고 싶은 조언"
+                placeholder="후배들에게 도움이 될 만한 취업 꿀팁을 공유해주세요."
               />
-              <div className="flex justify-between items-center mt-2">
-                <p className="text-sm text-gray-500">최소 50자 이상 작성해주세요</p>
-                <p className={`text-sm ${formData.content.length >= 50 ? 'text-green-600' : 'text-gray-500'}`}>
-                  {formData.content.length}자
-                </p>
-              </div>
             </div>
           </div>
 
-          {/* Tags */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">태그</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">자격증</h2>
             
             <div className="space-y-4">
               <div className="flex space-x-2">
                 <input
                   type="text"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  value={newCertificate}
+                  onChange={(e) => setNewCertificate(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCertificate())}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  placeholder="태그를 입력하세요"
-                  maxLength={20}
+                  placeholder="자격증 이름을 입력하세요"
+                  maxLength={50}
                 />
                 <button
                   type="button"
-                  onClick={addTag}
-                  disabled={!newTag.trim() || formData.tags.length >= 5}
+                  onClick={addCertificate}
+                  disabled={!newCertificate.trim()}
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   <Plus size={16} />
@@ -258,15 +189,15 @@ const WriteReviewPage: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {formData.tags.map(tag => (
+                {formData.certificates.map(cert => (
                   <span
-                    key={tag}
+                    key={cert}
                     className="flex items-center space-x-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
                   >
-                    <span>#{tag}</span>
+                    <span>{cert}</span>
                     <button
                       type="button"
-                      onClick={() => removeTag(tag)}
+                      onClick={() => removeCertificate(cert)}
                       className="text-blue-500 hover:text-blue-700"
                     >
                       <X size={14} />
@@ -274,10 +205,6 @@ const WriteReviewPage: React.FC = () => {
                   </span>
                 ))}
               </div>
-
-              <p className="text-sm text-gray-500">
-                최대 5개까지 태그를 추가할 수 있습니다 ({formData.tags.length}/5)
-              </p>
             </div>
           </div>
 
@@ -287,7 +214,6 @@ const WriteReviewPage: React.FC = () => {
             </div>
           )}
 
-          {/* Submit Button */}
           <div className="flex justify-end space-x-4">
             <button
               type="button"
