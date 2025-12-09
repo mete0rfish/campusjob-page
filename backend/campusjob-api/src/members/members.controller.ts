@@ -23,20 +23,15 @@ interface RequestWithUser extends ExpressRequest {
 }
 
 @Controller('api/members')
-@UseGuards(JwtAuthGuard) // 모든 엔드포인트에 JWT 인증 적용
+@UseGuards(JwtAuthGuard)
 export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
-  // 내 정보 조회 (Spring: getMe)
   @Get('me')
   getMe(@Request() req: RequestWithUser) {
-    // req.user는 JwtStrategy에서 리턴한 Member 객체입니다.
     return this.sanitizeMember(req.user);
   }
 
-  // 회원 생성 (Spring: createMember)
-  // 참고: 회원가입은 보통 /api/join(AuthModule)에서 처리하지만,
-  // RESTful 리소스 차원에서 MemberApi에도 존재하므로 구현함.
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createMemberDto: CreateMemberDto) {
@@ -44,14 +39,12 @@ export class MembersController {
     return this.sanitizeMember(member);
   }
 
-  // 특정 회원 조회 (Spring: getMember)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const member = await this.membersService.findOne(+id);
     return this.sanitizeMember(member);
   }
 
-  // 회원 정보 수정 (Spring: updateMember)
   @Put(':id')
   async update(
     @Param('id') id: string,
@@ -61,14 +54,12 @@ export class MembersController {
     return this.sanitizeMember(member);
   }
 
-  // 회원 삭제 (Spring: deleteMember)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     return this.membersService.remove(+id);
   }
 
-  // 비밀번호 등 민감 정보를 제거하는 헬퍼 메소드
   private sanitizeMember(member: Member) {
     return {
       id: member.id,

@@ -58,7 +58,7 @@ describe('AuthService', () => {
         password: 'hashedPassword',
         role: MemberRole.USER,
       };
-      
+
       (membersService.findOneByEmail as jest.Mock).mockResolvedValue(member);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
@@ -117,7 +117,11 @@ describe('AuthService', () => {
 
       const result = await service.login(loginDto);
 
-      expect(service.validateUser).toHaveBeenCalledWith(loginDto.email, loginDto.password);
+      expect(service.validateUser).toHaveBeenCalledWith(
+        loginDto.email,
+        loginDto.password,
+      );
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(jwtService.sign).toHaveBeenCalledWith({
         email: memberPayload.email,
         role: memberPayload.role,
@@ -131,7 +135,9 @@ describe('AuthService', () => {
 
       jest.spyOn(service, 'validateUser').mockResolvedValue(null);
 
-      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

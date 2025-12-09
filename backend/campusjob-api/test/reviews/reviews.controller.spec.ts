@@ -3,7 +3,6 @@ import { ReviewsController } from '../../src/reviews/reviews.controller';
 import { ReviewsService } from '../../src/reviews/reviews.service';
 import { CreateReviewDto } from '../../src/reviews/dto/create-review.dto';
 import { Member, MemberRole } from '../../src/members/entities/member.entity';
-import { Review } from '../../src/reviews/entities/review.entity';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 describe('ReviewsController', () => {
@@ -16,12 +15,6 @@ describe('ReviewsController', () => {
     name: 'Test User',
     password: 'hashedPassword',
     role: MemberRole.USER,
-  };
-
-  const mockReview: Review = {
-    id: 1,
-    content: 'Great job!',
-    member: mockMember,
   };
 
   beforeEach(async () => {
@@ -48,7 +41,13 @@ describe('ReviewsController', () => {
 
   describe('create', () => {
     it('should create a review and return it', async () => {
-      const createReviewDto: CreateReviewDto = { content: 'Excellent!' };
+      const createReviewDto: CreateReviewDto = {
+        company: 'Good Company',
+        certificates: ['cert2', 'cert3'],
+        age: 28,
+        seekPeriod: '2 months',
+        tip: 'Excellent!',
+      };
       const req = { user: mockMember };
       const expectedReview = {
         id: 2,

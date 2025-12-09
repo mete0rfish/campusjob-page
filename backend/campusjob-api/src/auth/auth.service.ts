@@ -13,10 +13,10 @@ export class AuthService {
   ) {}
 
   // 사용자 검증 (Spring: LoginFilter.attemptAuthentication + AuthenticationManager)
-  async validateUser(
+  validateUser = async (
     email: string,
     pass: string,
-  ): Promise<Omit<Member, 'password'> | null> {
+  ): Promise<Omit<Member, 'password'> | null> => {
     const member = await this.membersService.findOneByEmail(email);
 
     if (member && (await bcrypt.compare(pass, member.password))) {
@@ -28,10 +28,10 @@ export class AuthService {
       };
     }
     return null;
-  }
+  };
 
   // 로그인 (토큰 발급) (Spring: LoginFilter.successfulAuthentication + JwtUtil.createJwt)
-  async login(loginDto: LoginDto) {
+  login = async (loginDto: LoginDto) => {
     const member = await this.validateUser(loginDto.email, loginDto.password);
     if (!member) {
       throw new UnauthorizedException(
@@ -43,5 +43,5 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
     };
-  }
+  };
 }

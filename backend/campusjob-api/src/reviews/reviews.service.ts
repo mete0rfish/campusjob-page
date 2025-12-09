@@ -16,18 +16,18 @@ export class ReviewsService {
     private reviewRepository: Repository<Review>,
   ) {}
 
-  async create(
+  create = async (
     member: Member,
     createReviewDto: CreateReviewDto,
-  ): Promise<Review> {
+  ): Promise<Review> => {
     const review = this.reviewRepository.create({
       ...createReviewDto,
       member: member,
     });
     return this.reviewRepository.save(review);
-  }
+  };
 
-  async remove(memberEmail: string, id: number): Promise<void> {
+  remove = async (memberEmail: string, id: number): Promise<void> => {
     const review = await this.reviewRepository.findOne({
       where: { id },
       relations: ['member'],
@@ -40,5 +40,5 @@ export class ReviewsService {
     }
 
     await this.reviewRepository.remove(review);
-  }
+  };
 }

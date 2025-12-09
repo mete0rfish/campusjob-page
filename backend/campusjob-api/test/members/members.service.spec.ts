@@ -43,7 +43,9 @@ describe('MembersService', () => {
     }).compile();
 
     service = module.get<MembersService>(MembersService);
-    membersRepository = module.get<Repository<Member>>(getRepositoryToken(Member));
+    membersRepository = module.get<Repository<Member>>(
+      getRepositoryToken(Member),
+    );
   });
 
   it('should be defined', () => {
@@ -74,12 +76,16 @@ describe('MembersService', () => {
 
       const result = await service.create(createMemberDto);
 
-      expect(service.findOneByEmail).toHaveBeenCalledWith(createMemberDto.email);
+      expect(service.findOneByEmail).toHaveBeenCalledWith(
+        createMemberDto.email,
+      );
       expect(bcrypt.hash).toHaveBeenCalledWith(createMemberDto.password, 10);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(membersRepository.create).toHaveBeenCalledWith({
         ...createMemberDto,
         password: 'newHashedPassword',
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(membersRepository.save).toHaveBeenCalled();
       expect(result).toEqual({
         id: 2,
@@ -101,7 +107,9 @@ describe('MembersService', () => {
       await expect(service.create(createMemberDto)).rejects.toThrow(
         ConflictException,
       );
-      expect(service.findOneByEmail).toHaveBeenCalledWith(createMemberDto.email);
+      expect(service.findOneByEmail).toHaveBeenCalledWith(
+        createMemberDto.email,
+      );
     });
   });
 
@@ -110,6 +118,7 @@ describe('MembersService', () => {
       (membersRepository.findOne as jest.Mock).mockResolvedValue(mockMember);
 
       const result = await service.findOneByEmail(mockMember.email);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(membersRepository.findOne).toHaveBeenCalledWith({
         where: { email: mockMember.email },
       });
@@ -129,6 +138,7 @@ describe('MembersService', () => {
       (membersRepository.findOne as jest.Mock).mockResolvedValue(mockMember);
 
       const result = await service.findOne(mockMember.id);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(membersRepository.findOne).toHaveBeenCalledWith({
         where: { id: mockMember.id },
       });
@@ -153,6 +163,7 @@ describe('MembersService', () => {
       const result = await service.update(mockMember.id, updateMemberDto);
 
       expect(service.findOne).toHaveBeenCalledWith(mockMember.id);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(membersRepository.save).toHaveBeenCalledWith(updatedMember);
       expect(result).toEqual(updatedMember);
     });
@@ -170,14 +181,19 @@ describe('MembersService', () => {
 
   describe('remove', () => {
     it('should successfully remove a member', async () => {
-      (membersRepository.delete as jest.Mock).mockResolvedValue({ affected: 1 });
+      (membersRepository.delete as jest.Mock).mockResolvedValue({
+        affected: 1,
+      });
 
       await expect(service.remove(mockMember.id)).resolves.toBeUndefined();
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(membersRepository.delete).toHaveBeenCalledWith(mockMember.id);
     });
 
     it('should throw NotFoundException if member to remove is not found', async () => {
-      (membersRepository.delete as jest.Mock).mockResolvedValue({ affected: 0 });
+      (membersRepository.delete as jest.Mock).mockResolvedValue({
+        affected: 0,
+      });
 
       await expect(service.remove(999)).rejects.toThrow(NotFoundException);
     });

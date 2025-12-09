@@ -21,7 +21,11 @@ describe('ReviewsService', () => {
 
   const mockReview: Review = {
     id: 1,
-    content: 'Great job!',
+    company: 'Good Company',
+    certificates: ['cert2', 'cert3'],
+    age: 28,
+    seekPeriod: '2 months',
+    tip: 'Excellent!',
     member: mockMember,
   };
 
@@ -42,7 +46,9 @@ describe('ReviewsService', () => {
     }).compile();
 
     service = module.get<ReviewsService>(ReviewsService);
-    reviewRepository = module.get<Repository<Review>>(getRepositoryToken(Review));
+    reviewRepository = module.get<Repository<Review>>(
+      getRepositoryToken(Review),
+    );
   });
 
   it('should be defined', () => {
@@ -51,7 +57,13 @@ describe('ReviewsService', () => {
 
   describe('create', () => {
     it('should successfully create a new review', async () => {
-      const createReviewDto: CreateReviewDto = { content: 'Amazing!' };
+      const createReviewDto: CreateReviewDto = {
+        company: 'Good Company',
+        certificates: ['cert2', 'cert3'],
+        age: 28,
+        seekPeriod: '2 months',
+        tip: 'Excellent!',
+      };
       const expectedReview = {
         ...createReviewDto,
         member: mockMember,
@@ -65,7 +77,9 @@ describe('ReviewsService', () => {
 
       const result = await service.create(mockMember, createReviewDto);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(reviewRepository.create).toHaveBeenCalledWith(expectedReview);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(reviewRepository.save).toHaveBeenCalledWith(expectedReview);
       expect(result).toEqual({ id: 2, ...expectedReview });
     });
@@ -79,10 +93,12 @@ describe('ReviewsService', () => {
       await expect(
         service.remove(mockMember.email, mockReview.id),
       ).resolves.toBeUndefined();
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(reviewRepository.findOne).toHaveBeenCalledWith({
         where: { id: mockReview.id },
         relations: ['member'],
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(reviewRepository.remove).toHaveBeenCalledWith(mockReview);
     });
 
@@ -98,9 +114,9 @@ describe('ReviewsService', () => {
       const otherMemberEmail = 'other@example.com';
       (reviewRepository.findOne as jest.Mock).mockResolvedValue(mockReview);
 
-      await expect(service.remove(otherMemberEmail, mockReview.id)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.remove(otherMemberEmail, mockReview.id),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

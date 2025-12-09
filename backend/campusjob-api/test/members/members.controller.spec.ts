@@ -53,6 +53,7 @@ describe('MembersController', () => {
   describe('getMe', () => {
     it('should return the sanitized current user', () => {
       const req = { user: mockMember };
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       expect(controller.getMe(req as any)).toEqual(sanitizedMember);
     });
   });
@@ -110,7 +111,9 @@ describe('MembersController', () => {
     it('should throw NotFoundException if member not found', async () => {
       (service.findOne as jest.Mock).mockRejectedValue(new NotFoundException());
 
-      await expect(controller.findOne('999')).rejects.toThrow(NotFoundException);
+      await expect(controller.findOne('999')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
